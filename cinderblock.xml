@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<cinder>
+<block
+	name="XMPP"
+	id="org.libcinder.gloox.xmpp"
+	author="Caleb Johnston"
+	git="git://github.com/calebjohnston/Cinder-XMPP.git"
+	summary="XMPP support for Mac and Windows using gloox library"
+	version="1.0.3"
+	libraryUrl="http://camaya.net/gloox/"
+	>
+	<sourcePattern>src/*.cpp</sourcePattern>
+	<headerPattern>include/*.h</headerPattern>
+</block>
+</cinder>
