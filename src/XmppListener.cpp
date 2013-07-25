@@ -116,6 +116,7 @@ void XmppListener::handleMessageSession( MessageSession* session )
 {
 	// this example can handle only one session. so we get rid of the old session
 	mClient->disposeMessageSession( mSession );
+	
 	mSession = session;
 	mSession->registerMessageHandler( this );
 	mMessageEventFilter = new MessageEventFilter( mSession );

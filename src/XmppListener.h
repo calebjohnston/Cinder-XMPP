@@ -72,7 +72,7 @@ protected:
 	virtual void handleMessage( const gloox::Message& msg, gloox::MessageSession * /*session*/ );
 	virtual void handleMessageEvent( const gloox::JID& from, gloox::MessageEventType event );
 	virtual void handleChatState( const gloox::JID& from, gloox::ChatStateType state );
-	virtual void handleMessageSession( gloox::MessageSession *session );
+	virtual void handleMessageSession( gloox::MessageSession* session );
 	virtual void handleLog( gloox::LogLevel level, gloox::LogArea area, const std::string& message );
 	virtual void handlePresence( const gloox::Presence& presence );
 
