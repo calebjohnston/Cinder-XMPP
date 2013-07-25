@@ -15,8 +15,14 @@
 	<sourcePattern>src/*.cpp</sourcePattern>
 	<headerPattern>src/*.h</headerPattern>
 	<platform os="macosx">
-		<staticLibrary>lib/macosx/libgloox.a</staticLibrary>	
-		<includePath>include</includePath>
+		<platform config="debug">
+			<staticLibrary>lib/macosx/libgloox.a</staticLibrary>
+			<includePath>include</includePath>
+		</platform>
+		<platform config="release">
+			<staticLibrary>lib/macosx/libgloox.a</staticLibrary>
+			<includePath>include</includePath>
+		</platform>
 	</platform>
 	<platform os="msw">
 		<staticLibrary>lib/msw/libgloox.lib</staticLibrary>
