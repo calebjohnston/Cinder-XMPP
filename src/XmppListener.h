@@ -52,7 +52,7 @@ public:
 	bool isConnected() const { return mIsConnected; }
 	
 	std::string server() const { return mServer; }
-	std::string usernam() const { return mUsername; }
+	std::string username() const { return mUsername; }
 	
 	virtual bool sendMessage( const gloox::JID& recipient, const std::string& message, const std::string& subject );
 	

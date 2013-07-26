@@ -5,7 +5,7 @@
 
 using namespace gloox;
 
-XmppListener::XmppListener(XmppClient* delegate = 0)
+XmppListener::XmppListener(XmppClient* delegate)
 :	mDelegate(delegate), mClient( 0 ), mSession( 0 ), mMessageEventFilter( 0 ), 
 	mChatStateFilter( 0 ), mIsConnected(false), mServer(""), mUsername("")
 {
@@ -25,8 +25,6 @@ XmppListener::~XmppListener()
 
 void XmppListener::setup( const std::string& username, const std::string& server, const bool enableLogging )
 {
-	if ((server.empty() && mServer.empty()) || (username.empty() && mUsername.empty())) return;
-	
 	std::string address = username;
 	address += "@";
 	if (server.empty()){
@@ -79,6 +77,8 @@ void XmppListener::onDisconnect( ConnectionError e )
 
 bool XmppListener::onTLSConnect( const CertInfo& info )
 {
+	mIsConnected = true;
+	
 	// info.status
 	// info.issuer
 	// info.server
@@ -134,7 +134,7 @@ void XmppListener::handleRosterPresence(const RosterItem& item, const std::strin
 	//item.jid()
 	//presence
 	
-	mDelegate->handleRoster(item, resource, presence, msg);
+	mDelegate->handleRosterPresence(item, resource, presence, msg);
 }
 
 void XmppListener::handlePresence( const Presence& presence ) {}
@@ -146,7 +146,7 @@ void XmppListener::handleLog( LogLevel level, LogArea area, const std::string& m
 
 bool XmppListener::sendMessage( const JID& recipient, const std::string& message, const std::string& subject )
 {
-	if(!mIsConnected || msg.empty() || !mClient) return false;
+	if(!mIsConnected || message.empty() || !mClient) return false;
 	
 	Message m(Message::Chat, recipient, message, subject);
 	mClient->send(m);

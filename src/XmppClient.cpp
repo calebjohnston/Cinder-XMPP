@@ -17,11 +17,15 @@ XmppClient::~XmppClient()
 {
 }
 
-void XmppClient::connect(const std::string& xmppUser, const std::string& xmppServer)
-{	
+bool XmppClient::connect(const std::string& xmppUser, const std::string& xmppServer)
+{
+	if (xmppUser.empty() || xmppServer.empty()) return false;
+	
 	mListener.setup(xmppUser, xmppServer);
 	
 	mListenerThread = ThreadRef( new std::thread(&XmppListener::openConnection, &mListener, this) );
+	
+	return true;
 }
 
 void XmppClient::onConnect()
@@ -72,7 +76,7 @@ void XmppClient::onDisconnect( ConnectionError e )
 	mSignalDisconnect();
 }
 
-bool XmppClient::onTLSConnect( const CertInfo& info )
+void XmppClient::onTLSConnect( const CertInfo& info )
 {
 	mSignalTlsConnect();
 }
@@ -82,54 +86,39 @@ void XmppClient::handleMessage( const Message& msg, MessageSession* sess )
 	// process information from message
 	std::string name = sess->target().username();
 
-	std::unordered_map<std::string, XmppPeer>::const_iterator peer_itr = mUserMap.find(name);
+	std::unordered_map<std::string, XmppPeer>::const_iterator peer_itr = mRoster.find(name);
 	XmppPeer peer;
-	if (peer_itr != mUserMap.end()) 
-		peer = peer_itr->second();
+	if (peer_itr != mRoster.end()) 
+		peer = peer_itr->second;
 	
 	mSignalHandleMsg( peer, msg.subject(), msg.body() );
 }
 
 void XmppClient::handleRoster( const Roster& roster )
 {
-	mUserMap.clear();
+	mRoster.clear();
 	
-	Roster::const_iterator it;
-	for ( it = roster.begin(); it != roster.end(); ++it ) {
-		std::string username = (*it).second->jid();
-		size_t index = username.find("@");
-		username = username.substr(0,index);
-		mUserMap.insert(std::pair<std::string, XmppPeer>(username, XmppPeer(username)));
+	std::list<std::string> userlist;
+	Roster::const_iterator itr;
+	for ( itr = roster.begin(); itr != roster.end(); ++itr ) {
+		const std::string& username = (*itr).second->jidJID().username();
+		mRoster.insert(std::pair<std::string, XmppPeer>(username, XmppPeer(username)));
+		userlist.push_back(username);
 	}
 	
-	mSignalRoster();
+	mSignalRoster(userlist);
 }
 
 void XmppClient::handleRosterPresence( const RosterItem& item, const std::string& resource, Presence::PresenceType presence, const std::string& message )
 {	
-	std::string name = item.jid();
-	size_t index = name.find("@");
-	name = name.substr(0,index);
-	
-	// add/update clients
-	std::unordered_map<std::string, XmppPeer>::const_iterator peer_itr;
-	if (presence == Presence::Available) {
-		peer_itr = mUserMap.find(name);
-		
-		if (peer_itr != mUserMap.end()) {
-			peer_itr->second().setStatus(presence);
-		}
-	}
-	else if (presence==Presence::Invalid || presence==Presence::Unavailable) {
-		peer_itr = mUserMap.find(name);
+	const std::string& name = item.jidJID().username();
 
-		if (peer_itr != mUserMap.end()) {
-			peer_itr->second().setStatus(presence);
-			peer_itr->second().setConnected(false);
-		}
-	}	
+	std::unordered_map<std::string, XmppPeer>::iterator peer_itr = mRoster.find(name);
+	if (peer_itr != mRoster.end()) {
+		peer_itr->second.setStatus(XmppPeer::presenceToStatus(presence));
+	}
 	
-	mSignalRosterPresence( peer_itr->second(), resource, presence, message );
+	mSignalRosterPresence( peer_itr->second, resource, XmppPeer::presenceToStatus(presence), message );
 }
 
 bool XmppClient::sendMessage(const std::string& recipient, const std::string& message, const std::string& subject)
@@ -140,4 +129,14 @@ bool XmppClient::sendMessage(const std::string& recipient, const std::string& me
 	JID jid(r);
 	
 	return mListener.sendMessage(jid, message, subject);
+}
+
+bool operator==( const XmppPeer& lhs, const XmppPeer& rhs)
+{
+	return lhs.username() == rhs.username();
+}
+
+bool operator!=( const XmppPeer& lhs, const XmppPeer& rhs)
+{
+	return lhs.username() != rhs.username();
 }
