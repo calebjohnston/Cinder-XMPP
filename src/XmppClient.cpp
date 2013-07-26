@@ -35,7 +35,7 @@ void XmppClient::onConnect()
 
 void XmppClient::onDisconnect( ConnectionError e )
 {
-	switch(e) {
+	switch (e) {
 		case ConnNoError:
 			break;
 		
@@ -64,13 +64,13 @@ void XmppClient::onDisconnect( ConnectionError e )
 		case ConnNotConnected:
 		case ConnDnsError:
 		case ConnConnectionRefused:
-			throw XmppFailedConnectionExc();
+			throw XmppConnectionExc();
 			break;
 			
 		case ConnOutOfMemory:
 		case ConnCompressionFailed:
 		default:
-			throw XmppConnectionExc();
+			throw XmppExc();
 	}
 	
 	mSignalDisconnect();

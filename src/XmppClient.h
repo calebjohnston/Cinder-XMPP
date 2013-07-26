@@ -141,9 +141,6 @@ class XmppStreamExc : public XmppExc {
 class XmppConnectionExc : public XmppExc {
 };
 
-class XmppFailedConnectionExc : public XmppExc {
-};
-
 #pragma mark comparison operators
 
 bool operator==( const XmppPeer& lhs, const XmppPeer& rhs);
