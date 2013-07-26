@@ -11,6 +11,7 @@ using namespace gloox;
 
 XmppClient::XmppClient()
 {
+	mListener = XmppListener(this);
 }
 
 XmppClient::~XmppClient()

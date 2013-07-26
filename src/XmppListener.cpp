@@ -65,14 +65,14 @@ void XmppListener::onConnect()
 {
 	mIsConnected = true;
 	
-	mDelegate->onConnect();
+	if (mDelegate) mDelegate->onConnect();
 }
 
 void XmppListener::onDisconnect( ConnectionError e )
 {
 	mIsConnected = false;
 	
-	mDelegate->onDisconnect(e);
+	if (mDelegate) mDelegate->onDisconnect(e);
 }
 
 bool XmppListener::onTLSConnect( const CertInfo& info )
@@ -91,7 +91,7 @@ bool XmppListener::onTLSConnect( const CertInfo& info )
 	// ctime( &from )
 	// ctime( &to )
 		
-	mDelegate->onTLSConnect(info);
+	if (mDelegate) mDelegate->onTLSConnect(info);
 		
 	return true;
 }
@@ -103,7 +103,7 @@ void XmppListener::handleMessage( const Message& msg, MessageSession* sess )
 	// msg.body()
 	// msg.thread()
 
-	mDelegate->handleMessage( msg, sess );
+	if (mDelegate) mDelegate->handleMessage( msg, sess );
 }
 
 void XmppListener::handleMessageEvent( const JID& from, MessageEventType event ) {}
@@ -125,7 +125,7 @@ void XmppListener::handleMessageSession( MessageSession* session )
 
 void XmppListener::handleRoster( const Roster& roster )
 {	
-	mDelegate->handleRoster(roster);
+	if (mDelegate) mDelegate->handleRoster(roster);
 }
 
 void XmppListener::handleRosterPresence(const RosterItem& item, const std::string& resource,
@@ -134,7 +134,7 @@ void XmppListener::handleRosterPresence(const RosterItem& item, const std::strin
 	//item.jid()
 	//presence
 	
-	mDelegate->handleRosterPresence(item, resource, presence, msg);
+	if (mDelegate) mDelegate->handleRosterPresence(item, resource, presence, msg);
 }
 
 void XmppListener::handlePresence( const Presence& presence ) {}
