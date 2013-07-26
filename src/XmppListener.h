@@ -33,37 +33,28 @@
 # include <windows.h>
 #endif
 
-typedef ci::signals::signal<void()> SignalCallback;
-typedef ci::signals::signal<void(const gloox::CertInfo&)> SignalCallbackTls;
-typedef ci::signals::signal<void(const gloox::Roster&)> SignalCallbackRoster;
-typedef ci::signals::signal<void(const gloox::Message&, gloox::MessageSession*)> SignalCallbackMsg;
-typedef ci::signals::signal<void(const gloox::RosterItem&, const std::string&,
-									gloox::Presence::PresenceType, const std::string&)> SignalCallbackRosterPresence;
+class XmppClient;
 
 class XmppListener : public gloox::ConnectionListener, gloox::MessageHandler,
 	gloox::RosterListener, gloox::MessageSessionHandler, gloox::LogHandler,
 	gloox::MessageEventHandler, gloox::ChatStateHandler, gloox::PresenceHandler
 {
 public:
-	XmppListener();
+	XmppListener(XmppClient* delegate = 0);
 	virtual ~XmppListener();
 
-	void setup( const std::string& username = "", const std::string& server = "" );
+	void setup( const std::string& username = "", const std::string& server = "", const bool enableLogging = false );
 
 	void openConnection(bool toggle = false);
 
-	gloox::Client& getClient() const;
+	const gloox::Client& getClient() const;
 		
 	bool isConnected() const { return mIsConnected; }
 	
-	virtual bool sendMessage( const gloox::JID& recipient, const std::string& msg, const std::string& subject );
+	std::string server() const { return mServer; }
+	std::string usernam() const { return mUsername; }
 	
-	SignalCallback&					getSignalConnect() { return mSignalConnect; }
-	SignalCallbackTls&				getSignalTlsConnect() { return mSignalTlsConnect; }
-	SignalCallback&					getSignalDisconnect() { return mSignalDisconnect; }
-	SignalCallbackMsg&				getSignalMessage() { return mSignalHandleMsg; }
-	SignalCallbackRoster&			getSignalRoster() { return mSignalRoster; }
-	SignalCallbackRosterPresence&	getSignalRosterPresence() { return mSignalRosterPresence; }
+	virtual bool sendMessage( const gloox::JID& recipient, const std::string& message, const std::string& subject );
 	
 protected:
 	virtual void onConnect();
@@ -92,18 +83,16 @@ protected:
 	virtual bool handleUnsubscriptionRequest( const gloox::JID& jid, const std::string& msg ) { return false; }
 	virtual void handleNonrosterPresence( const gloox::Presence& presence ) {}
 
-private:	
+private:
+	std::string mServer;
+	std::string mUsername;
+	
 	bool mIsConnected;
 	
 	gloox::Client* mClient;
 	gloox::MessageSession* mSession;
 	gloox::MessageEventFilter* mMessageEventFilter;
 	gloox::ChatStateFilter* mChatStateFilter;
-	std::string mServer;
-	std::string mUsername;
-	SignalCallback mSignalConnect, mSignalDisconnect;
-	SignalCallbackTls mSignalTlsConnect;
-	SignalCallbackMsg mSignalHandleMsg;
-	SignalCallbackRoster mSignalRoster;
-	SignalCallbackRosterPresence mSignalRosterPresence;
+	
+	XmppClient* mDelegate;
 };
