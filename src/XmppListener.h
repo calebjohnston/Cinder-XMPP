@@ -33,15 +33,17 @@
 # include <windows.h>
 #endif
 
-class XmppClient;
+namespace xmpp {
 
-class XmppListener : public gloox::ConnectionListener, gloox::MessageHandler,
+class Client;
+
+class Listener : public gloox::ConnectionListener, gloox::MessageHandler,
 	gloox::RosterListener, gloox::MessageSessionHandler, gloox::LogHandler,
 	gloox::MessageEventHandler, gloox::ChatStateHandler, gloox::PresenceHandler
 {
 public:
-	XmppListener(XmppClient* delegate = 0);
-	virtual ~XmppListener();
+	Listener(xmpp::Client* delegate = 0);
+	virtual ~Listener();
 
 	void setup( const std::string& username = "", const std::string& server = "", const bool enableLogging = false );
 
@@ -94,5 +96,7 @@ private:
 	gloox::MessageEventFilter* mMessageEventFilter;
 	gloox::ChatStateFilter* mChatStateFilter;
 	
-	XmppClient* mDelegate;
+	xmpp::Client* mDelegate;
 };
+
+}	/* end namespace xmpp */

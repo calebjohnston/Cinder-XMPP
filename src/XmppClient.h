@@ -11,23 +11,37 @@
 
 #include "XmppListener.h"
 
+namespace xmpp {
+
 typedef std::shared_ptr<class std::thread> ThreadRef;
 
-class XmppPeer {
-public:
-	enum status_t {
-		Available,    //!< online
-		Chat,         //!< available for chat
-		Away,         //!< away
-		DND,          //!< DND (Do Not Disturb)
-		XA,           //!< eXtended Away
-		Unavailable,  //!< offline
-		Invalid       //!< invalid
-	};
+enum error_t {
+	NoError,				//!< everything was fine, no error
+	GeneralError,			//!< non-descript
+	AuthenticationError,	//!< problem with auth info
+	ProtocolError,			//!< problem with following protocol
+	StreamError,			//!< problem stream writing or reading
+	ConnectionError			//!< connection dropped
+};
 	
+enum status_t {
+	Available,    //!< online
+	Chat,         //!< available for chat
+	Away,         //!< away
+	DND,          //!< DND (Do Not Disturb)
+	XA,           //!< eXtended Away
+	Unavailable,  //!< offline
+	Invalid       //!< invalid
+};
+
+status_t presenceToStatus(const gloox::Presence::PresenceType value);
+
+std::string statusString(const status_t value);
+	
+class Peer {
 public:
-	XmppPeer(const std::string& user = "unknown", bool conn = false, status_t status = Invalid) : mUsername(user), mConnected(conn), mStatus(status) {}
-	~XmppPeer() {}
+	Peer(const std::string& user = "unknown", bool conn = false, status_t status = Invalid) : mUsername(user), mConnected(conn), mStatus(status) {}
+	~Peer() {}
 	
 	bool isConnected() const { return mConnected; }
 	void setConnected(const bool value) { mConnected = value; }
@@ -42,36 +56,6 @@ public:
 		mConnected = mStatus < 5;
 	}
 	
-	static status_t presenceToStatus(const gloox::Presence::PresenceType value)
-	{
-		if ((int) value <= 6) {
-			return XmppPeer::status_t((int)value);
-		}
-		return XmppPeer::Invalid;
-	}
-	
-	static std::string statusString(const status_t value)
-	{
-		switch (value) {
-			case Available: return "available";
-				break;
-			case Chat: return "chat";
-				break;
-			case Away: return "away";
-				break;
-			case DND: return "do not disturb";
-				break;
-			case XA: return "extended away";
-				break;
-			case Unavailable: return "unavailable";
-				break;
-				
-			case Invalid: return "invalid";
-			default:
-				break;
-		}
-	}
-	
 private:
 	bool mConnected;
 	std::string mUsername;
@@ -80,30 +64,36 @@ private:
 
 
 typedef ci::signals::signal<void()> SignalCallback;
+typedef ci::signals::signal<void(const xmpp::error_t&)> SignalCallbackDisconnect;
 typedef ci::signals::signal<void(const std::list<std::string>&)> SignalCallbackRoster;
-typedef ci::signals::signal<void(const XmppPeer&, const std::string&, const std::string&)> SignalCallbackMsg;
-typedef ci::signals::signal<void(const XmppPeer&, const std::string&, XmppPeer::status_t, const std::string&)> SignalCallbackPresence;
+typedef ci::signals::signal<void(const xmpp::Peer&, const std::string&, const std::string&)> SignalCallbackMsg;
+typedef ci::signals::signal<void(const xmpp::Peer&, const std::string&, xmpp::status_t, const std::string&)> SignalCallbackPresence;
 
-class XmppClient {
+class Client {
 public:
-	XmppClient();
-	~XmppClient();
+	Client();
+	~Client();
 	
 	bool connect(const std::string& xmppUser, const std::string& xmppServer);
 	
 	bool sendMessage( const std::string& recipient, const std::string& message, const std::string& subject );
 	
+	xmpp::status_t getStatusForPeer(const std::string& username) const;
+	bool isPeerConnected(const std::string& username) const;
+	
 	bool isConnected() const { return mListener.isConnected(); }
+	
+	const std::unordered_map<std::string, xmpp::Peer>& getRoster() const { return mRoster; }
 	
 	SignalCallback&				getSignalConnect() { return mSignalConnect; }
 	SignalCallback&				getSignalTlsConnect() { return mSignalTlsConnect; }
-	SignalCallback&				getSignalDisconnect() { return mSignalDisconnect; }
+	SignalCallbackDisconnect&	getSignalDisconnect() { return mSignalDisconnect; }
 	SignalCallbackRoster&		getSignalRoster() { return mSignalRoster; }
 	SignalCallbackMsg&			getSignalMessage() { return mSignalHandleMsg; }
 	SignalCallbackPresence&		getSignalRosterPresence() { return mSignalRosterPresence; }
 	
 protected:
-	friend class XmppListener;
+	friend class xmpp::Listener;
 	
 	virtual void onConnect();
 	virtual void onDisconnect( gloox::ConnectionError e );
@@ -113,11 +103,12 @@ protected:
 	virtual void handleRosterPresence( const gloox::RosterItem& item, const std::string& resource, gloox::Presence::PresenceType presence, const std::string& message );
 	
 private:
-	XmppListener mListener;
+	xmpp::Listener mListener;
 	ThreadRef mListenerThread;
-	std::unordered_map<std::string, XmppPeer> mRoster;
+	std::unordered_map<std::string, xmpp::Peer> mRoster;
 	
-	SignalCallback mSignalConnect, mSignalDisconnect, mSignalTlsConnect;
+	SignalCallback mSignalConnect, mSignalTlsConnect;
+	SignalCallbackDisconnect mSignalDisconnect;
 	SignalCallbackRoster mSignalRoster;
 	SignalCallbackMsg mSignalHandleMsg;
 	SignalCallbackPresence mSignalRosterPresence;
@@ -143,5 +134,7 @@ class XmppConnectionExc : public XmppExc {
 
 #pragma mark comparison operators
 
-bool operator==( const XmppPeer& lhs, const XmppPeer& rhs);
-bool operator!=( const XmppPeer& lhs, const XmppPeer& rhs);
+bool operator==( const xmpp::Peer& lhs, const xmpp::Peer& rhs);
+bool operator!=( const xmpp::Peer& lhs, const xmpp::Peer& rhs);
+
+}	/* end namespace xmpp */

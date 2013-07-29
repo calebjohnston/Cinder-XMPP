@@ -5,13 +5,15 @@
 
 using namespace gloox;
 
-XmppListener::XmppListener(XmppClient* delegate)
+namespace xmpp {
+
+Listener::Listener(xmpp::Client* delegate)
 :	mDelegate(delegate), mClient( 0 ), mSession( 0 ), mMessageEventFilter( 0 ), 
 	mChatStateFilter( 0 ), mIsConnected(false), mServer(""), mUsername("")
 {
 }
 
-XmppListener::~XmppListener()
+Listener::~Listener()
 {
 	if (mClient) mClient->disconnect();
 	
@@ -23,7 +25,7 @@ XmppListener::~XmppListener()
 	delete mClient;
 }
 
-void XmppListener::setup( const std::string& username, const std::string& server, const bool enableLogging )
+void Listener::setup( const std::string& username, const std::string& server, const bool enableLogging )
 {
 	std::string address = username;
 	address += "@";
@@ -36,7 +38,7 @@ void XmppListener::setup( const std::string& username, const std::string& server
 	
 	JID jid(address);
 	
-	mClient = new Client( jid, username );
+	mClient = new gloox::Client( jid, username );
 	mClient->registerPresenceHandler( this );
 	mClient->registerConnectionListener( this );
 	mClient->registerMessageSessionHandler( this, 0 );
@@ -49,11 +51,11 @@ void XmppListener::setup( const std::string& username, const std::string& server
 		mClient->logInstance().registerLogHandler( LogLevelDebug, LogAreaAll, this );
 }
 
-void XmppListener::openConnection(bool toggle)
+void Listener::openConnection(bool toggle)
 {
 	if (!mIsConnected && mClient) {
 		if ( mClient->connect( toggle ) ) {
-			ConnectionError ce = ConnNoError;
+			gloox::ConnectionError ce = ConnNoError;
 			while ( ce == ConnNoError && mClient ) {
 				ce = mClient->recv();
 			}
@@ -61,21 +63,21 @@ void XmppListener::openConnection(bool toggle)
 	}
 }
 
-void XmppListener::onConnect()
+void Listener::onConnect()
 {
 	mIsConnected = true;
 	
 	if (mDelegate) mDelegate->onConnect();
 }
 
-void XmppListener::onDisconnect( ConnectionError e )
+void Listener::onDisconnect( gloox::ConnectionError e )
 {
 	mIsConnected = false;
 	
 	if (mDelegate) mDelegate->onDisconnect(e);
 }
 
-bool XmppListener::onTLSConnect( const CertInfo& info )
+bool Listener::onTLSConnect( const CertInfo& info )
 {
 	mIsConnected = true;
 	
@@ -96,7 +98,7 @@ bool XmppListener::onTLSConnect( const CertInfo& info )
 	return true;
 }
 
-void XmppListener::handleMessage( const Message& msg, MessageSession* sess )
+void Listener::handleMessage( const Message& msg, MessageSession* sess )
 {
 	// msg.subtype()
 	// msg.subject()
@@ -106,11 +108,11 @@ void XmppListener::handleMessage( const Message& msg, MessageSession* sess )
 	if (mDelegate) mDelegate->handleMessage( msg, sess );
 }
 
-void XmppListener::handleMessageEvent( const JID& from, MessageEventType event ) {}
+void Listener::handleMessageEvent( const JID& from, MessageEventType event ) {}
 
-void XmppListener::handleChatState( const JID& from, ChatStateType state ) {}
+void Listener::handleChatState( const JID& from, ChatStateType state ) {}
 
-void XmppListener::handleMessageSession( MessageSession* session )
+void Listener::handleMessageSession( MessageSession* session )
 {
 	// this example can handle only one session. so we get rid of the old session
 	mClient->disposeMessageSession( mSession );
@@ -123,12 +125,12 @@ void XmppListener::handleMessageSession( MessageSession* session )
 	mChatStateFilter->registerChatStateHandler( this );
 }
 
-void XmppListener::handleRoster( const Roster& roster )
+void Listener::handleRoster( const Roster& roster )
 {	
 	if (mDelegate) mDelegate->handleRoster(roster);
 }
 
-void XmppListener::handleRosterPresence(const RosterItem& item, const std::string& resource,
+void Listener::handleRosterPresence(const RosterItem& item, const std::string& resource,
 										Presence::PresenceType presence, const std::string& msg )
 {
 	//item.jid()
@@ -137,14 +139,14 @@ void XmppListener::handleRosterPresence(const RosterItem& item, const std::strin
 	if (mDelegate) mDelegate->handleRosterPresence(item, resource, presence, msg);
 }
 
-void XmppListener::handlePresence( const Presence& presence ) {}
+void Listener::handlePresence( const Presence& presence ) {}
 
-void XmppListener::handleLog( LogLevel level, LogArea area, const std::string& message )
+void Listener::handleLog( LogLevel level, LogArea area, const std::string& message )
 {
 	ci::app::console() << "Xmpp Log Level: " << level << ", area: " << area << " : " << message.c_str() << std::endl;
 }
 
-bool XmppListener::sendMessage( const JID& recipient, const std::string& message, const std::string& subject )
+bool Listener::sendMessage( const JID& recipient, const std::string& message, const std::string& subject )
 {
 	if(!mIsConnected || message.empty() || !mClient) return false;
 	
@@ -154,7 +156,9 @@ bool XmppListener::sendMessage( const JID& recipient, const std::string& message
 	return true;
 }
 
-const gloox::Client& XmppListener::getClient() const
+const gloox::Client& Listener::getClient() const
 {
 	return *mClient;
+}
+
 }
