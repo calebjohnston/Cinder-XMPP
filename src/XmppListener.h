@@ -50,7 +50,6 @@ public:
 	const gloox::Client& getClient() const;
 		
 	bool isConnected() const { return mIsConnected; }
-	
 	std::string server() const { return mServer; }
 	std::string username() const { return mUsername; }
 	
@@ -60,7 +59,7 @@ protected:
 	virtual void onConnect();
 	virtual void onDisconnect( gloox::ConnectionError e );
 	virtual bool onTLSConnect( const gloox::CertInfo& info );
-	virtual void handleMessage( const gloox::Message& msg, gloox::MessageSession * /*session*/ );
+	virtual void handleMessage( const gloox::Message& msg, gloox::MessageSession* session );
 	virtual void handleMessageEvent( const gloox::JID& from, gloox::MessageEventType event );
 	virtual void handleChatState( const gloox::JID& from, gloox::ChatStateType state );
 	virtual void handleMessageSession( gloox::MessageSession* session );
@@ -83,11 +82,10 @@ protected:
 	virtual bool handleUnsubscriptionRequest( const gloox::JID& jid, const std::string& msg ) { return false; }
 	virtual void handleNonrosterPresence( const gloox::Presence& presence ) {}
 
-private:
+private:	
+	bool mIsConnected;
 	std::string mServer;
 	std::string mUsername;
-	
-	bool mIsConnected;
 	
 	gloox::Client* mClient;
 	gloox::MessageSession* mSession;
